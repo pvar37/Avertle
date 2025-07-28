@@ -749,7 +749,7 @@ export default function AvertleGame() {
           </div>
         )}
         <footer style={styles.footer}>
-          &copy; 2025 <a href="https://www.pranayvarada.com" style={{ color: 'white', textDecoration: 'underline' }}>Pranay Varada</a>. All rights reserved.
+          A game by <a href="https://www.pranayvarada.com" style={{ color: 'white', textDecoration: 'underline' }}>Pranay Varada</a>
         </footer>
 
       </div>
@@ -906,7 +906,7 @@ export default function AvertleGame() {
           />
         )}
         <footer style={styles.footer}>
-          &copy; 2025 <a href="https://www.pranayvarada.com" style={{ color: 'white', textDecoration: 'underline' }}>Pranay Varada</a>. All rights reserved.
+          A game by <a href="https://www.pranayvarada.com" style={{ color: 'white', textDecoration: 'underline' }}>Pranay Varada</a>
         </footer>
       </div>
       </>
