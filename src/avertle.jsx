@@ -27,7 +27,7 @@ export default function AvertleGame() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth <= 600 || window.innerHeight <= 865);
+    const checkMobile = () => setIsMobile(window.innerWidth <= 600 || window.innerHeight <= 750);
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -133,6 +133,17 @@ export default function AvertleGame() {
   });
 
   const [showStats, setShowStats] = useState(false);
+
+  const initialHistory = [];
+
+  const [wordHistory, setWordHistory] = useState(() => {
+    const saved = localStorage.getItem('avertleHistory');
+    return saved ? JSON.parse(saved) : initialHistory;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('avertleHistory', JSON.stringify(wordHistory));
+  }, [wordHistory]);
   
   useEffect(() => {
     localStorage.setItem('avertleStats', JSON.stringify(stats));
@@ -285,6 +296,11 @@ export default function AvertleGame() {
               wins: prev[difficulty].wins + 1
             }
           }));
+          setWordHistory(prev => [...prev, {
+            word: current,
+            result: 'win',
+            difficulty
+          }]);
           return;
         }
         const newFragment = [...fragment, { letter, by: 'computer' }];
@@ -302,6 +318,11 @@ export default function AvertleGame() {
               wins: prev[difficulty].wins + 1
             }
           }));
+          setWordHistory(prev => [...prev, {
+            word: current,
+            result: 'win',
+            difficulty
+          }]);
         } else {
           setPlayerTurn(true);
           setMessage("Your turn!");
@@ -342,6 +363,11 @@ export default function AvertleGame() {
           losses: prev[difficulty].losses + 1
         }
       }));
+      setWordHistory(prev => [...prev, {
+        word: current,
+        result: 'loss',
+        difficulty
+      }]);
     } else {
       const hasOptions = dictionary.some(word => word.startsWith(current));
       if (!hasOptions) {
@@ -354,6 +380,11 @@ export default function AvertleGame() {
             losses: prev[difficulty].losses + 1
           }
         }));
+        setWordHistory(prev => [...prev, {
+          word: current,
+          result: 'loss (ineligible)',
+          difficulty
+        }]);
       } else {
         setPlayerTurn(false);
         setMessage("Computer's turn...");
@@ -446,7 +477,9 @@ export default function AvertleGame() {
     }, 20);
   };
 
-  function StatsModal({ stats, disableIneligibleLetters, setDisableIneligibleLetters, onClose }) {
+  function StatsModal({ stats, wordHistory, disableIneligibleLetters, setDisableIneligibleLetters, onClose }) {
+    const [activeTab, setActiveTab] = useState("stats");
+
     return (
       <div style={{
         position: 'fixed',
@@ -468,7 +501,7 @@ export default function AvertleGame() {
           position: 'relative'
         }}>
           <button
-            onClick={() => setShowStats(false)}
+            onClick={onClose}
             style={{
               position: 'absolute',
               top: '0.5rem',
@@ -481,33 +514,108 @@ export default function AvertleGame() {
               color: '#9333ea'
             }}
           >×</button>
-          <h2 style={{
-            fontSize: '1.5rem',
-            fontWeight: 'bold',
-            marginBottom: '1.5rem',
-            color: "#9333ea"
-          }}>Your stats</h2>
-          {["easy", "medium", "hard"].map((level) => {
-            const s = stats[level];
-            const total = s.wins + s.losses;
-            const winRate = total ? Math.round((s.wins / total) * 100) : 0;
-            return (
-              <div key={level} style={{ marginBottom: '2rem' }}>
-                <div style={{ fontWeight: 'bold', fontSize: '1.2rem', marginBottom: '0.5rem', textTransform: 'capitalize' }}>{level}</div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', textAlign: 'center', fontSize: '1.3rem', fontWeight: '600' }}>
-                  {["Played", "Wins", "Losses", "Win %"].map((label, i) => {
-                    const value = [total, s.wins, s.losses, winRate][i];
+
+          {/* Tabs */}
+          <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: '1.5rem' }}>
+            {["stats", "history"].map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  fontWeight: activeTab === tab ? 700 : 400,
+                  backgroundColor: activeTab === tab ? '#9333ea' : '#eee',
+                  color: activeTab === tab ? 'white' : '#333',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  fontFamily: "Fredoka, sans-serif",
+                }}
+              >
+                {tab === "stats" ? "Stats" : "History"}
+              </button>
+            ))}
+          </div>
+
+          {/* Stats View */}
+          {activeTab === "stats" && (
+            <>
+              {["easy", "medium", "hard"].map((level) => {
+                const s = stats[level];
+                const total = s.wins + s.losses;
+                const winRate = total ? Math.round((s.wins / total) * 100) : 0;
+                return (
+                  <div key={level} style={{ marginBottom: '2rem' }}>
+                    <div style={{ fontWeight: 'bold', fontSize: '1.2rem', marginBottom: '0.5rem', textTransform: 'capitalize' }}>{level}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', textAlign: 'center', fontSize: '1.3rem', fontWeight: '600' }}>
+                      {["Played", "Wins", "Losses", "Win %"].map((label, i) => {
+                        const value = [total, s.wins, s.losses, winRate][i];
+                        return (
+                          <div key={label} style={{ flex: 1 }}>
+                            <div style={{ fontSize: '2rem' }}>{value}</div>
+                            <div style={{ fontSize: '0.8rem', color: '#aaa' }}>{label}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
+
+          {/* Word History View */}
+          {activeTab === "history" && (
+            <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              <div style={{ marginBottom: '1rem', fontSize: '1.5rem', fontWeight: 600 }}>
+                You have created{" "}
+                {
+                  wordHistory.filter(entry => !entry.result.includes("ineligible")).length
+                }{" "}
+                word{wordHistory.filter(entry => !entry.result.includes("ineligible")).length === 1 ? "" : "s"}
+              </div>
+              {wordHistory.length === 0 ? (
+                <div>No words recorded yet.</div>
+              ) : (
+                wordHistory
+                  .filter(entry => !entry.result.includes("ineligible"))
+                  .slice()
+                  .reverse()
+                  .map((entry, idx) => {
+                    const color =
+                      entry.result === "win"
+                        ? "#4ade80"
+                        : "#f87171";
+
+                    const wordContent = (
+                      <span style={{ fontWeight: 600, color }}>
+                        {entry.word}
+                      </span>
+                    );
+
                     return (
-                      <div key={label} style={{ flex: 1 }}>
-                        <div style={{ fontSize: '2rem' }}>{value}</div>
-                        <div style={{ fontSize: '0.8rem', color: '#aaa' }}>{label}</div>
+                      <div key={idx} style={{ marginBottom: '0.4rem', fontSize: '1rem' }}>
+                        <a
+                          href={`https://www.collinsdictionary.com/dictionary/english/${entry.word}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ textDecoration: 'none', color }}
+                          title={`View definition of "${entry.word}"`}
+                        >
+                          {wordContent}
+                        </a>
+                        <span style={{ marginLeft: '0.2rem' }}>
+                          ({entry.difficulty})
+                        </span>
                       </div>
                     );
-                  })}
-                </div>
-              </div>
-            );
-          })}
+                  })
+              )}
+            </div>
+          )}
+
+          {/* Toggle at the bottom */}
           <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', fontSize: '0.9rem' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
               <span style={{ color: '#333', fontWeight: 500 }}>Disable ineligible letters</span>
@@ -614,7 +722,7 @@ export default function AvertleGame() {
               marginTop: "1.5rem",
               backgroundColor: "#9333ea",
               color: "white",
-              fontWeight: "600"
+              fontWeight: "600",
             }}
           >
             View stats
@@ -624,6 +732,7 @@ export default function AvertleGame() {
         {showStats && (
           <StatsModal
             stats={stats}
+            wordHistory={wordHistory}
             disableIneligibleLetters={disableIneligibleLetters}
             setDisableIneligibleLetters={setDisableIneligibleLetters}
             onClose={() => setShowStats(false)}
@@ -674,6 +783,8 @@ export default function AvertleGame() {
                 lineHeight: "1.5",
                 position: "relative",
                 textAlign: "left",
+                maxHeight: '800px',
+                overflowY: 'auto'
               }}
             >
               <button
@@ -739,7 +850,7 @@ export default function AvertleGame() {
                 </label>
               </div>
 
-              <p style={{ marginTop: "1.5rem", fontSize: isMobile ? "0.8rem" : "0.9rem" }}>Inspired by the word game <a
+              <p style={{ marginTop: "1.5rem", fontSize: isMobile ? "0.8rem" : "0.9rem" }}>Inspired by Vrinda Varada and the word game <a
                 href="https://en.wikipedia.org/wiki/Ghost_(game)"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -900,6 +1011,7 @@ export default function AvertleGame() {
         {showStats && (
           <StatsModal
             stats={stats}
+            wordHistory={wordHistory}
             disableIneligibleLetters={disableIneligibleLetters}
             setDisableIneligibleLetters={setDisableIneligibleLetters}
             onClose={() => setShowStats(false)}
