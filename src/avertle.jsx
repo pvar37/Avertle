@@ -46,7 +46,7 @@ export default function AvertleGame() {
     },
     container: {
       textAlign: 'center',
-      padding: isMobile ? '0.8rem 2rem 0rem 2rem' : '2rem',
+      padding: '0.8rem 2rem 0rem 2rem',
       backgroundColor: '#7e22ce',
       fontFamily: 'Fredoka, sans-serif',
       color: 'white'
@@ -61,7 +61,7 @@ export default function AvertleGame() {
       fontSize: isMobile ? '1rem' : '1.2rem',
       color: 'white',
       fontWeight: 500,
-      marginBottom: isMobile ? '2rem' : '3rem'
+      marginBottom: '2rem'
     },
     intro: {
       fontSize: '1.2rem',
@@ -114,7 +114,7 @@ export default function AvertleGame() {
       left: 0,
       right: 0,
       textAlign: 'center',
-      fontSize: isMobile ? '0.6rem' : '0.9rem',
+      fontSize: isMobile ? '0.6rem' : '0.8rem',
       color: 'white',
       opacity: 0.7,
       zIndex: 50
@@ -917,9 +917,8 @@ export default function AvertleGame() {
         </div>
 
         <div style={{ marginTop: '1.5rem' }}>
-          {(isMobile
-            ? ["ABCDEFGHI", "JKLMNOPQR", "STUVWXYZ"]
-            : ["ABCDEFG", "HIJKLMN", "OPQRSTU", "VWXYZ"]
+          {(
+            ["ABCDEFGHI", "JKLMNOPQR", "STUVWXYZ"]
           ).map((row, rowIdx) => (
             <div
               key={rowIdx}
@@ -942,7 +941,7 @@ export default function AvertleGame() {
                   style={{
                     ...styles.button,
                     width: isMobile ? '30px' : '45px',
-                    height: isMobile ? '30px' : '45px',
+                    height: isMobile ? '30px' : '40px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
